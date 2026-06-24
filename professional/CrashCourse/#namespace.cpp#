@@ -1,0 +1,10 @@
+#include <print>
+
+using namespace std;
+
+int main() {
+  println("Hello, World!");
+  using std::print;
+  print("Hello, ");
+  std::println("World!");
+}

@@ -1,5 +1,5 @@
 {
-  description = "C/C++ learning environment with Clang and Qt";
+  description = "C/C++ learning environment with Clang, libc++, and Qt";
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
@@ -14,12 +14,11 @@
       devShells = forAllSystems (system:
         let
           pkgs = nixpkgs.legacyPackages.${system};
-
           clangPkgs = pkgs.llvmPackages_19;
         in
         {
           default = pkgs.mkShell.override {
-            stdenv = pkgs.clangStdenv;
+            stdenv = clangPkgs.libcxxStdenv;
           } {
             nativeBuildInputs = with pkgs; [
               clangPkgs.clang
@@ -27,6 +26,7 @@
               clangPkgs.lldb
 
               cmake
+              ninja
               gnumake
               pkg-config
 
@@ -34,6 +34,9 @@
             ];
 
             buildInputs = with pkgs; [
+              clangPkgs.libcxx
+              clangPkgs.libunwind
+
               qt6.qtbase
               qt6.qttools
             ];
@@ -46,7 +49,7 @@
 
               export CMAKE_PREFIX_PATH=${pkgs.qt6.qtbase}
 
-              echo "C/C++ dev shell loaded with Clang and Qt"
+              echo "C/C++ dev shell loaded with Clang + libc++ + Qt"
               echo "CC           = $CC"
               echo "CXX          = $CXX"
               echo "CLANGD_FLAGS = $CLANGD_FLAGS"

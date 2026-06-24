@@ -1,0 +1,10 @@
+#include <print>
+
+int main() {
+  if (int i = 0; i > 3) {
+    std::println("{} is indeed larger than 3", i);
+  }
+
+  int i = 3;
+  std::println("{}", i > 2 ? "yes": "no");
+}

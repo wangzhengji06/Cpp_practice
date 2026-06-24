@@ -1,0 +1,9 @@
+
+
+enum class State { Unknown, Started, Finished };
+enum class Error { None, BadInput, DiskFull, Unknown };
+
+int main() {
+  State mystate{Unknown};
+  mystate = State::Finished;
+}
