@@ -1,0 +1,8 @@
+// main.cpp
+import math;
+import std;
+
+int main() {
+    Calculator c;
+    std::println("{}", c.add(1, 2));
+}
