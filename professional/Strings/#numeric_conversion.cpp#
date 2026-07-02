@@ -1,0 +1,41 @@
+#include <charconv>   // std::to_chars, std::to_chars_result
+#include <string>     // std::string
+#include <system_error> // std::errc
+#include <print>      // std::println, C++23
+
+using namespace std;
+
+
+int main() {
+  long double d{3.14L};
+  string s{to_string(d)};
+
+  const string toParse{"   123USD"};
+  size_t index{0};
+  int value{stoi(toParse, &index)};
+
+
+  double value1 { 0.314 };
+  const size_t BufferSize{50};
+
+  string out(BufferSize, ' ');
+  auto [ptr1, error]{to_chars(out.data(), out.data() + out.size(), value1)};
+  if (error == errc{}) { println("{}", out); /* Conversion successful. */ }
+
+  double value2;
+
+  auto [ptr2, error2]{from_chars(out.data(), out.data() + out.size(), value2)};
+  if (error2 == errc{}) {
+    if (value1 == value2) {
+      println("Perfect round trip");
+    } else {
+      println("What is going on?");
+    }
+  }
+  
+
+
+
+
+
+}
