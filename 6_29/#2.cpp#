@@ -1,0 +1,39 @@
+#include <stdio.h>
+#include <string.h>
+
+struct Student {
+  char name[20];
+  int age;
+};
+
+int main() {
+  Student targets[]{Student{"Jake", 20}, {"Tom", 15}, {"Peter", 30}};
+
+  FILE *fp = fopen("students.dat", "wb");
+
+  if (fp == NULL) {
+    perror("Failed to open the file");
+    return 1;
+  }
+  size_t count = 3;
+
+  fwrite(targets, sizeof(Student), count, fp);
+
+  fclose(fp);
+  Student result[3];
+
+  fp = fopen("student.dat", "rb");
+
+  if (fp == NULL) {
+    perror("Failed to open the file");
+    return 1;
+  }
+
+  size_t readCount = fread(result, sizeof(Student), count, fp);
+
+  fclose(fp);
+
+  for (size_t i = 0; i < readCount; ++i) {
+    fprintf(stdout, "Name: %s, Age: %d\n", result[i].name, result[i].age);
+  }
+}

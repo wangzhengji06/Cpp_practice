@@ -1,0 +1,51 @@
+#include <string>
+#include <string_view>
+#include <utility>
+
+using namespace std;
+
+class Person {
+private:
+  string m_name;
+  int m_age;
+
+public:
+  Person(string name, int age);
+  ~Person() = default;
+  void set_name(string_view name);
+  void set_age(int age);
+  string_view get_name() const;
+  int get_age() const;
+};
+
+Person::Person(string name, int age) : m_name(std::move(name)), m_age(age) {}
+
+void Person::set_name(string_view name) { m_name = name; }
+
+void Person::set_age(int age) { m_age = age; }
+
+string_view Person::get_name() const { return m_name; }
+
+int Person::get_age() const { return m_age; }
+
+class Student : public Person {
+private:
+  string m_studentID;
+
+public:
+  Student(string name, int age, string studentID);
+  ~Student() = default;
+  void set_studentID(string_view studentID);
+  string_view get_studentID() const;
+};
+
+Student::Student(string name, int age, string studentID)
+    : Person(std::move(name), age), m_studentID(std::move(studentID)) {}
+
+void Student::set_studentID(string_view studentID) {
+  m_studentID = studentID;
+}
+
+string_view Student::get_studentID() const {
+  return m_studentID;
+}

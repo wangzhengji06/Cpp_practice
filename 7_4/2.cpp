@@ -1,0 +1,20 @@
+#include <print>
+
+using namespace std;
+
+struct Shape {
+  virtual void draw() = 0;
+  virtual ~Shape() = default;
+};
+
+struct Circle : public Shape {
+  void draw() override {
+    println("Drawn by Circle!");
+  }
+};
+
+struct Rectangle : public Shape {
+  void draw() override {
+    println("Drawn by Rectangle!");
+  }
+};
