@@ -1,0 +1,35 @@
+#include <print>
+#include <string>
+#include <string_view>
+#include <utility>
+
+using namespace std;
+
+class Student {
+public:
+  Student(string name, int age, string id)
+      : m_name(std::move(name)), m_age(age), m_id(std::move(id)) {};
+  string_view getName() const { return m_name; }
+  void setName(const string &newName) { m_name = newName; }
+  int getAge() const { return m_age; }
+  void setAge(int newAge) { m_age = newAge; }
+  string_view getID() const { return m_id; }
+  void setID(const string &newID) { m_id = newID; }
+  void display() {
+    println("The student's name is {}, age is {}, and id is {}.", m_name, m_age,
+            m_id);
+  }
+
+private:
+  string m_name;
+  int m_age;
+  string m_id;
+};
+
+int main() {
+  Student student1{"Jack", 25, "309"};
+  Student student2{"Bob", 35, "409"};
+
+  student1.display();
+  student2.display();
+}
