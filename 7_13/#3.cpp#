@@ -1,0 +1,17 @@
+#include <print>
+
+using namespace std;
+void checkPointer(int *Ptr) {
+  if (Ptr == nullptr) {
+    println("recieved a nullptr");
+  } else {
+    println("{} is recieved", *Ptr);
+  }
+}
+
+int main() {
+  int nice = 42;
+  int *nice_ptr = &nice;
+  checkPointer(nice_ptr);
+  checkPointer(nullptr);
+}
