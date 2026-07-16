@@ -7,7 +7,10 @@ class SpreadsheetCell {
 public:
   SpreadsheetCell() = default;
   SpreadsheetCell(double initialValue);
-  SpreadsheetCell(std::string_view initialValue);
+  explicit SpreadsheetCell(std::string_view initialValue);
+  SpreadsheetCell(const SpreadsheetCell &src) = default;
+
+  SpreadsheetCell &operator=(const SpreadsheetCell &rhs);
 
   void setValue(this SpreadsheetCell &self, double value);
   double getValue() const;

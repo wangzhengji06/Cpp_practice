@@ -8,7 +8,15 @@ using namespace std;
 SpreadsheetCell::SpreadsheetCell(double initialValue) : m_value{initialValue} {}
 
 SpreadsheetCell::SpreadsheetCell(string_view initialValue)
-    : m_value{stringToDouble(initialValue)} {}
+    : SpreadsheetCell{stringToDouble(initialValue)} {}
+
+SpreadsheetCell &SpreadsheetCell::operator=(const SpreadsheetCell &rhs) {
+  if (this == &rhs) {
+    return *this;
+  }
+  m_value = rhs.m_value;
+  return *this;
+}
 
 void printCell(const SpreadsheetCell &cell) { println("{}", cell.getString()); }
 
