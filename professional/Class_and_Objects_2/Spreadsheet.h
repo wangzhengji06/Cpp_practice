@@ -11,6 +11,9 @@ public:
 
   Spreadsheet &operator=(const Spreadsheet &rhs);
 
+  Spreadsheet(Spreadsheet &&src) noexcept;            // Move constructor
+  Spreadsheet &operator=(Spreadsheet &&rhs) noexcept; // Move assignment
+
   void setCellAt(std::size_t x, std::size_t y, const SpreadsheetCell &cell);
   SpreadsheetCell &getCellAt(std::size_t x, std::size_t y);
 
@@ -18,7 +21,6 @@ public:
 
 private:
   void verifyCoordinate(std::size_t x, std::size_t y) const;
-  // bool inRange(std::size_t value, std::size_t upper) const;
 
   std::size_t m_width{0};
   std::size_t m_height{0};
