@@ -2,29 +2,32 @@
 
 #include "SpreadsheetCell.h"
 #include <cstddef>
+#include <memory>
 
 class Spreadsheet {
 public:
-  Spreadsheet(std::size_t width, std::size_t height);
+  explicit Spreadsheet(std::size_t width, std::size_t height);
   Spreadsheet(const Spreadsheet &src);
+  Spreadsheet(Spreadsheet &&) noexcept;
   ~Spreadsheet();
 
   Spreadsheet &operator=(const Spreadsheet &rhs);
-
-  Spreadsheet(Spreadsheet &&src) noexcept;            // Move constructor
-  Spreadsheet &operator=(Spreadsheet &&rhs) noexcept; // Move assignment
+  Spreadsheet &operator=(Spreadsheet &&) noexcept;
 
   void setCellAt(std::size_t x, std::size_t y, const SpreadsheetCell &cell);
   SpreadsheetCell &getCellAt(std::size_t x, std::size_t y);
+  const SpreadsheetCell &getCellAt(std::size_t x, std::size_t y) const;
+
+  std::size_t getId() const;
+
+  static constexpr std::size_t MaxHeight{100};
+  static constexpr std::size_t MaxWidth{100};
 
   void swap(Spreadsheet &other) noexcept;
 
 private:
-  void verifyCoordinate(std::size_t x, std::size_t y) const;
-
-  std::size_t m_width{0};
-  std::size_t m_height{0};
-  SpreadsheetCell **m_cells{nullptr};
+  class Impl;
+  std::unique_ptr<Impl> m_impl;
 };
 
 void swap(Spreadsheet &first, Spreadsheet &second) noexcept;
