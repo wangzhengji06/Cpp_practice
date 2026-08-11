@@ -60,3 +60,9 @@ float student_list_average_score(const StudentList *list);
 const Student *student_list_highest_score(const StudentList *list);
 
 const Student *student_list_lowest_score(const StudentList *list);
+
+typedef void (*StudentCallback)(const Student *student);
+
+void student_list_foreach(const StudentList *list, StudentCallback callback);
+
+int student_list_import_from_file(StudentList *list, const char *filename);

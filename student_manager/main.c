@@ -1,9 +1,20 @@
+#include "logger.h"
 #include "student.h"
 #include <stdio.h>
+#include <stdlib.h>
 
 static void print_menu(void) {
-  printf("1. Add student\n2. List students\n3. Find student\n4. Delete "
-         "student\n5. Modify student\n0. Exit\n");
+  printf("1. Add student\n"
+         "2. List students\n"
+         "3. Find student by ID\n"
+         "4. Delete student\n"
+         "5. Modify student\n"
+         "6. Search by name\n"
+         "7. Search by score range\n"
+         "8. Sort students\n"
+         "9. Statistics\n"
+         "10. Import students form file\n"
+         "0. Exit\n");
 }
 
 static void print_one_student(const Student *student) {
@@ -23,6 +34,12 @@ static void print_one_student(const Student *student) {
   default:
     printf(", class: UNKNOWN\n");
     break;
+  }
+}
+
+static void print_students_array(const Student *students, int count) {
+  for (int i = 0; i < count; ++i) {
+    print_one_student(&students[i]);
   }
 }
 
@@ -85,6 +102,7 @@ static void handle_add(StudentList *list) {
   }
 
   printf("Student added successfully.\n");
+  log_message("Student added");
 }
 
 static void handle_find(StudentList *list) {
@@ -123,6 +141,7 @@ static void handle_delete(StudentList *list) {
   }
 
   printf("Student deleted successfully.\n");
+  log_message("Student deleted");
 }
 
 static void handle_modify(StudentList *list) {
@@ -155,6 +174,149 @@ static void handle_modify(StudentList *list) {
   }
 
   printf("Student modified successfully.\n");
+  log_message("Student modified");
+}
+
+static void handle_search_by_name(const StudentList *list) {
+  char name[MAX_NAME_LEN];
+
+  printf("Enter name keyword: ");
+
+  if (scanf("%49s", name) != 1) {
+    printf("Invalid name.\n");
+    return;
+  }
+
+  Student *results = (Student *)malloc(sizeof(Student) * list->size);
+
+  if (results == NULL && list->size > 0) {
+    printf("Memory allocation failed.\n");
+    return;
+  }
+
+  int count = student_list_find_by_name(list, name, results, list->size);
+
+  if (count == 0) {
+    printf("No students found.\n");
+  } else {
+    printf("Found %d student(s):\n", count);
+    print_students_array(results, count);
+  }
+
+  free(results);
+}
+
+static void handle_search_by_score(const StudentList *list) {
+  float min_score;
+  float max_score;
+
+  printf("Minimum score: ");
+  if (scanf("%f", &min_score) != 1) {
+    printf("Invalid score.\n");
+    return;
+  }
+
+  printf("Maximum score: ");
+  if (scanf("%f", &max_score) != 1) {
+    printf("Invalid score.\n");
+    return;
+  }
+
+  if (min_score > max_score) {
+    printf("Minimum score cannot be greater than maximum score.\n");
+    return;
+  }
+
+  Student *results = (Student *)malloc(sizeof(Student) * list->size);
+
+  if (results == NULL && list->size > 0) {
+    printf("Memory allocation failed.\n");
+    return;
+  }
+
+  int count = student_list_find_by_score_range(list, min_score, max_score,
+                                               results, list->size);
+
+  if (count == 0) {
+    printf("No students found.\n");
+  } else {
+    printf("Found %d student(s):\n", count);
+    print_students_array(results, count);
+  }
+
+  free(results);
+}
+
+static void handle_sort(StudentList *list) {
+  int choice;
+
+  printf("1. Score ascending\n"
+         "2. Age ascending\n"
+         "0. Cancel\n"
+         "Choice: ");
+
+  if (scanf("%d", &choice) != 1) {
+    printf("Invalid choice.\n");
+    return;
+  }
+
+  switch (choice) {
+  case 1:
+    student_list_sort(list, compare_student_by_score_asc);
+    printf("Sorted by score ascending.\n");
+    break;
+
+  case 2:
+    student_list_sort(list, compare_student_by_age_asc);
+    printf("Sorted by age ascending.\n");
+    break;
+
+  case 0:
+    return;
+
+  default:
+    printf("Unknown choice.\n");
+    return;
+  }
+
+  student_list_print(list);
+}
+
+static void handle_statistics(const StudentList *list) {
+  if (list->size == 0) {
+    printf("No students available.\n");
+    return;
+  }
+
+  float average = student_list_average_score(list);
+
+  const Student *highest = student_list_highest_score(list);
+
+  const Student *lowest = student_list_lowest_score(list);
+
+  printf("Average score: %.2f\n", average);
+
+  printf("Highest score student:\n");
+  print_one_student(highest);
+
+  printf("Lowest score student:\n");
+  print_one_student(lowest);
+}
+
+static void handle_import(StudentList *list) {
+  char filename[256];
+  printf("What will be the file name?\n");
+  if (scanf("%255s", filename) != 1) {
+    printf("Invalid filename.\n");
+    return;
+  }
+  int count = student_list_import_from_file(list, filename);
+  if (count == -1) {
+    printf("Failed to import file.\n");
+    return;
+  }
+
+  printf("Imported %d student(s).\n", count);
 }
 
 int main(void) {
@@ -196,6 +358,26 @@ int main(void) {
 
     case 5:
       handle_modify(&list);
+      break;
+
+    case 6:
+      handle_search_by_name(&list);
+      break;
+
+    case 7:
+      handle_search_by_score(&list);
+      break;
+
+    case 8:
+      handle_sort(&list);
+      break;
+
+    case 9:
+      handle_statistics(&list);
+      break;
+
+    case 10:
+      handle_import(&list);
       break;
 
     case 0:

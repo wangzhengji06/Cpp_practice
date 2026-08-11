@@ -14,17 +14,13 @@ void student_list_init(StudentList *list) {
 }
 
 int student_list_add(StudentList *list, const Student *student) {
-  // if size < capacity, just add normally
-  //  else, capacity * 2, then add
-  if (!student_is_valid(student) ||
+  if (student_is_valid(student) != 0 ||
       student_list_contains_id(list, student->id)) {
-    return 0;
+    return -1;
   }
-
   if (list->size >= list->capacity) {
     Student *new_data =
         (Student *)realloc(list->data, sizeof(Student) * list->capacity * 2);
-
     if (new_data == NULL) {
       return -1;
     }
@@ -32,10 +28,10 @@ int student_list_add(StudentList *list, const Student *student) {
     list->capacity *= 2;
   }
   list->data[list->size] = *student;
-  list->size += 1;
-  return 1;
-}
+  list->size++;
 
+  return 0;
+}
 void student_list_print(const StudentList *list) {
   for (int i = 0; i < list->size; ++i) {
     const Student *target = &list->data[i];
@@ -89,19 +85,29 @@ int student_list_delete_by_id(StudentList *list, const char *id) {
           (list->size - target - 1) * sizeof(Student));
 
   list->size--;
-  return 1;
+  return 0;
 }
 
 int student_list_modify_by_id(StudentList *list, const char *id,
                               const Student *new_student) {
+  if (student_is_valid(new_student) != 0) {
+    return -1;
+  }
+
   Student *target = student_list_find_by_id(list, id);
+
   if (target == NULL) {
     return -1;
   }
-  *target = *new_student;
-  return 1;
-}
+  if (strcmp(id, new_student->id) != 0 &&
+      student_list_contains_id(list, new_student->id)) {
+    return -1;
+  }
 
+  *target = *new_student;
+
+  return 0;
+}
 int save_to_file(const char *filename, const StudentList *list) {
   FILE *file = fopen(filename, "wb");
   if (file == NULL) {
@@ -109,43 +115,56 @@ int save_to_file(const char *filename, const StudentList *list) {
     return -1;
   }
 
-  // Write the student into the file
   fwrite(&list->size, sizeof(list->size), 1, file);
   fwrite(list->data, sizeof(Student), list->size, file);
 
   fclose(file);
-  return 1;
+  return 0;
 }
 
 int load_from_file(const char *filename, StudentList *list) {
   FILE *file = fopen(filename, "rb");
+
   if (file == NULL) {
     perror("Failed to open the file");
     return -1;
   }
+
   int size = 0;
+
   if (fread(&size, sizeof(size), 1, file) != 1) {
     fclose(file);
     return -1;
   }
+
+  if (size < 0) {
+    fclose(file);
+    return -1;
+  }
+
   if (size > list->capacity) {
     Student *new_data = (Student *)realloc(list->data, sizeof(Student) * size);
+
     if (new_data == NULL) {
       fclose(file);
       return -1;
     }
+
     list->data = new_data;
     list->capacity = size;
   }
+
   if (size > 0) {
     if (fread(list->data, sizeof(Student), size, file) != (size_t)size) {
       fclose(file);
       return -1;
     }
   }
+
   list->size = size;
+
   fclose(file);
-  return 1;
+  return 0;
 }
 
 int student_list_contains_id(const StudentList *list, const char *id) {
@@ -156,21 +175,20 @@ int student_list_contains_id(const StudentList *list, const char *id) {
   }
   return 0;
 }
-
 int student_is_valid(const Student *student) {
   if (student->id[0] == '\0') {
-    return 0;
+    return -1;
   } else if (student->name[0] == '\0') {
-    return 0;
+    return -1;
   } else if (student->age < 1 || student->age > 120) {
-    return 0;
+    return -1;
   } else if (student->score < 0 || student->score > 100) {
-    return 0;
+    return -1;
   } else if (student->s_class != CLASS_A && student->s_class != CLASS_B &&
              student->s_class != CLASS_C) {
-    return 0;
+    return -1;
   } else {
-    return 1;
+    return 0;
   }
 }
 
@@ -286,4 +304,39 @@ const Student *student_list_lowest_score(const StudentList *list) {
     }
   }
   return ptr;
+}
+
+void student_list_foreach(const StudentList *list, StudentCallback callback) {
+  for (int i = 0; i < list->size; ++i) {
+    callback(&(list->data[i]));
+  }
+}
+
+int student_list_import_from_file(StudentList *list, const char *filename) {
+  FILE *file;
+  file = fopen(filename, "r");
+  if (file == NULL) {
+    return -1;
+  }
+  char line[256];
+  int count = 0;
+
+  while (fgets(line, sizeof(line), file) != NULL) {
+    Student student;
+    int class_choice;
+    int parsed = sscanf(line, "%9s %49s %d %f %d", student.id, student.name,
+                        &student.age, &student.score, &class_choice);
+    if (parsed != 5) {
+      continue;
+    }
+    if (class_choice != 0 && class_choice != 1 && class_choice != 2) {
+      continue;
+    }
+    student.s_class = (Class)class_choice;
+    if (student_list_add(list, &student) == 0) {
+      count++;
+    }
+  }
+  fclose(file);
+  return count;
 }
