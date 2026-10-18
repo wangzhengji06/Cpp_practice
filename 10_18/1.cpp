@@ -1,47 +1,79 @@
-// Problem: I need to select child array that follows equal difference. I know
-// how to select child array, which is majorly done by backtrack. But how do I
-// make sure it is equal difference?
+// Problem: I need to design an algorithm to calculate the smallest K
+// numbers.  How do I avoid sorting the whole list?
 
-// Initial Thought:
-// The worst solution is after getting all the subarray that is
-// >=3, I maunally test one by one whether it is equal difference. On second
-// thought, when does a equal difference array being determined? When there are
-// two elements in the array So I can start pruning when there are already two
-// elements in the array.
-//
-// But how do we determine the backtrack logic? After a subarry reaches length =
-// 3, it can stop here, or....
+// Initial Thought: I create a priority heap of size k, and I keep iterating and
+// pushing to priority heap. I only compare with the biggest one inside heap, if
+// smaller, then pop that guy and append it. IT will be O(n)
 
-// Investigation: I implemeted the algorithm
-// Observation: Now it is kind of not that good. Especiallyu because it asks for
-// sub sequecne, so it should have the abiulity to jump Determiniation: I added
-// the logic.
+// Investigation: I implemented the max heap method. It is an acceptable method,
+// only edge case is k == 0.
 
-// Reflection: This is O(2^n), which is like the worst complexity
+// Observation: Nothing
 
-#include <unordered_map>
+// Determincation: Nothing
+
+// Reflection: Nothing
+
+#include <random>
 #include <vector>
+
 using namespace std;
-// Problem: A pretty new way of
 
 class Solution {
 public:
-  int numberOfArithmeticSlices(vector<int> &nums) {
-    int n = nums.size();
+  vector<int> smallestK(vector<int> &arr, int k) {
+    vector<int> result;
+    if (k == 0) {
+      return result;
+    }
+    int target = k - 1;
+    quickSelect(0, static_cast<int>(arr.size()) - 1, arr, target);
+    result = vector<int>(arr.begin(), arr.begin() + k);
+    return result;
+  }
 
-    vector<unordered_map<long long, long long>> dp(n);
-    long long result = 0;
+  void quickSelect(int l, int r, vector<int> &nums, int target) {
+    if (l >= r) {
+      return;
+    }
+    uniform_int_distribution<int> dist(l, r);
+    int x = nums[dist(gen)];
+    auto [a, b] = partition(l, r, x, nums);
+    if (target < a) { // here it means target less than
+      quickSelect(l, a - 1, nums, target);
+    } else if (target > b) {
+      quickSelect(b + 1, r, nums, target);
+    } else {
+      return;
+    }
+  }
 
-    for (int i = 0; i < n; ++i) {
-      for (int j = 0; j < i; ++j) {
-        long long diff = (long long)nums[i] - nums[j];
-
-        long long count = dp[j][diff];
-
-        result += count;
-        dp[i][diff] += count + 1;
+  // Rememebr < a are values smaller than target
+  // >= a < i is the values eauql to target
+  // <= i <=b are values that are not examined
+  // > b are values larger than target
+  pair<int, int> partition(int l, int r, int target, vector<int> &nums) {
+    int a = l;
+    int b = r;
+    int i = l;
+    while (i <= b) {
+      if (nums[i] == target) {
+        ++i;
+      } else if (nums[i] < target) {
+        swap(i++, a++, nums);
+      } else {
+        swap(i, b--, nums);
       }
     }
-    return static_cast<int>(result);
+    return {a, b};
   }
+
+  void swap(int i, int j, vector<int> &num) {
+    int temp = num[i];
+    num[i] = num[j];
+    num[j] = temp;
+  }
+
+private:
+  mt19937 gen{random_device{}()};
 };
