@@ -1,0 +1,26 @@
+1. Why does the order change from run to run?
+
+When a task is submitted to pool, I think it will indeed being added into jobs by order.
+However, thread is competing for the task. When 2 is added into jobs, and lock release, it will wake up the workers which will try to run the job immediately. so it could thappen that when job 2 is done, job 1 hasn't bee finished even though it is added to jobs earlier.
+
+2. What happens if you forget the notify_one() call? Try it!
+
+Weridly everything still runs.
+
+3. What could go wrong if you pushed the task without locking the mutex?
+
+If I push the task without locking, it could happen that there is data race. when I am pushing the task, some worker is also trying to pop the task, so it would result in undefined behavior.
+
+4. Why is notify_one enough here...
+
+Because I am pushing the task one by one. If I push several tasks in a batch, then notify_all is needed because I want several workers to deal with it, not only one worker./
+
+5. Cmake -S and -B meaning
+
+-S explicity specify the source directory, which is here if we use `-S .`.
+
+-B specify a build directory, so the build folder here if we use `-B build`.
+
+6. Compiler warning
+
+something about int and size_t
