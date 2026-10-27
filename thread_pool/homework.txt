@@ -24,3 +24,22 @@ Because I am pushing the task one by one. If I push several tasks in a batch, th
 6. Compiler warning
 
 something about int and size_t
+
+7. Write down your results:
+Version Results of 3 runs TSan reports a race?
+Plain int  7249?  data race
+int + std::mutex   4000 5000 6000 no data race
+std::atomic<int> 5000 6000 7000 no data race
+
+
+8. Why do we print counter after the closing } of the pool’s block? What happens in the pool’s
+destructor? (Hint: what does std::jthread do when it is destroyed?)
+Because jthread autoamtically join when being destoryed, we can the result that is completedly by thread.
+
+9. If the result is below 1000000 even with the mutex, look at your worker loop: does it finish all
+queued tasks before it stops?
+nope, it does not.
+
+10. ++counter is one line of code. Why is it not “one step” for the CPU?
+
+I think it is because it first needs to read the value, then do counter + 1, then it needs to assign the value to counter. so it is not atomic.

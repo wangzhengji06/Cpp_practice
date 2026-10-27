@@ -1,3 +1,4 @@
+#include <atomic>
 #include <condition_variable>
 #include <functional>
 #include <iostream>
@@ -54,11 +55,26 @@ private:
   std::vector<std::jthread> workers;
 };
 int main() {
-  ThreadPool pool{4};
-  for (int i{0}; i < 8; ++i) {
-    pool.submit([i] {
-      std::osyncstream out{std::cout};
-      std::println(out, "task {}", i);
-    });
+  //  ThreadPool pool{4};
+  //  for (int i{0}; i < 8; ++i) {
+  //    pool.submit([i] {
+  //      std::osyncstream out{std::cout};
+  //      std::println(out, "task {}", i);
+  //    });
+  //}
+
+  std::atomic<int> counter{0};
+
+  {
+    ThreadPool pool{4};
+    for (int i = 0; i < 1000; ++i) {
+      pool.submit([&]() {
+        for (int i = 0; i < 1000; ++i) {
+
+          ++counter;
+        }
+      });
+    }
   }
+  std::println("counter = {}", counter.load());
 }
