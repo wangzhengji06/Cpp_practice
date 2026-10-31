@@ -43,3 +43,40 @@ nope, it does not.
 10. ++counter is one line of code. Why is it not “one step” for the CPU?
 
 I think it is because it first needs to read the value, then do counter + 1, then it needs to assign the value to counter. so it is not atomic.
+
+
+11. Build in Release mode for timing (cmake -S . -B build-release
+-DCMAKE_BUILD_TYPE=Release). Use std::chrono::steady_clock to measure how long the
+pricing takes, and fill in this table:
+
+1	The final result would be: 10.443769512585112   The total time it takes is: 1211466967ns       
+2	The final result would be: 10.443769512585112   The total time it takes is: 603739040ns
+4	The final result would be: 10.443769512585112   The total time it takes is: 305915903ns
+all cores  The final result would be: 10.443769512585112 The total time it takes is: 110670418ns
+(hardware_concurrency())
+
+Questions
+1. Every task writes into the same vector partial. Why do we not need a mutex here?
+Because we are visitng different slots on the vector. 
+2. Why does each chunk create its own std::mt19937_64 instead of sharing one generator?
+Because generator is not thread safe
+3. If you seed chunk c with the value c, the price is exactly the same for every thread count.
+Why? Why is that useful when testing?
+Because each chunk uses a fixed seed based on its chunk index, it generates the same sequence of random numbers regardless of which thread executes it.
+This makes our experiment deterministic and reproducible.
+4. Does the speed-up keep growing as you add threads? Where does it stop, and why?
+Adding more threads than the cpu usally stops the improving.
+
+
+
+Option Questions:
+C++ vs. Python: if you wrote Exercise B with Python’s threading module, would 4
+threads be about 4x faster? Find out what the GIL is.
+Nope, in python we cannot really do parallel using multithread. GIL means global interpreter lock?
+I remember the reason has something to do with python reference counting machanism.
+
+
+My own questions:
+1. How should a thread pool handle graceful shutdown when there are still tasks in the queue? I initially used `while (!token.stop_requested())`, but realized that this could cause workers to exit before processing all the tasks. Is using `while (true)` together with the stop-aware condition variable sufficient, or are there other edge cases I should consider?
+
+2. Currently, I rely on the destruction of the ThreadPool to ensure that all submitted tasks are completed. What if I want to wait for all tasks to finish without destroying the pool, so I can reuse it for another batch of tasks? How would I implement that safely?

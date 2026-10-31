@@ -12,9 +12,12 @@ add_executable(example experiments.cpp)
 add_executable(thread_pool_demo src/main.cpp)
 target_include_directories(thread_pool_demo PRIVATE include)
 
+add_executable(option_pricer src/option_pricer.cpp)
+
 find_package(Threads REQUIRED)
 target_link_libraries(thread_pool_demo PRIVATE Threads::Threads)
 target_link_libraries(example PRIVATE Threads::Threads)
+target_link_libraries(option_pricer PRIVATE Threads::Threads)
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
   target_compile_options(thread_pool_demo PRIVATE -Wall -Wextra -Wpedantic)
@@ -24,9 +27,9 @@ endif()
 if(ENABLE_TSAN)
   target_compile_options(thread_pool_demo PRIVATE -fsanitize=thread -g)
   target_link_options(thread_pool_demo PRIVATE -fsanitize=thread)
-endif()
-
-if(ENABLE_TSAN)
   target_compile_options(example PRIVATE -fsanitize=thread -g)
   target_link_options(example PRIVATE -fsanitize=thread)
+  target_compile_options(option_pricer PRIVATE -fsanitize=thread -g)
+  target_link_options(option_pricer PRIVATE -fsanitize=thread)
 endif()
+
