@@ -3,6 +3,7 @@
 #include <condition_variable>
 #include <cstdint>
 #include <functional>
+#include <future>
 #include <mutex>
 #include <numeric>
 #include <print>
@@ -20,12 +21,16 @@ public:
     }
   }
 
-  void submit(std::move_only_function<void()> task) {
+  template <class F, class R = std::invoke_result_t<std::decay_t<F>>>
+  [[nodiscard]] std::future<R> submit(F &&func) {
+    std::packaged_task<R()> task(func);
+    auto future = task.get_future();
     {
       std::lock_guard lock{m};
       jobs.push(std::move(task));
     }
     cv.notify_one();
+    return future;
   }
 
 private:
@@ -62,22 +67,24 @@ double simulate_chunk(std::uint64_t seed, int paths) {
 }
 
 int main() {
-  std::vector<double> partial(100, 0.0);
+  std::vector<std::future<double>> partial;
   auto t1 = std::chrono::steady_clock::now();
-  {
-    ThreadPool pool{std::thread::hardware_concurrency()};
-    // TODO: submit one task per chunk c that sets partial[c]
-    for (int c = 0; c < 100; ++c) {
-      pool.submit([&, c]() {
-        partial[c] = simulate_chunk(static_cast<uint64_t>(c), 100000);
-      });
-    }
+  ThreadPool pool{std::thread::hardware_concurrency()};
+  // TODO: submit one task per chunk c that sets partial[c]
+  for (int c = 0; c < 100; ++c) {
+    partial.push_back(pool.submit(
+        [&, c]() { return simulate_chunk(static_cast<uint64_t>(c), 100000); }));
   }
+
   auto t2 = std::chrono::steady_clock::now();
 
   // TDO: add up partial, divide by the number of paths, discount with exp(-r *
   // T)
-  auto result{std::accumulate(partial.begin(), partial.end(), 0.0)};
+  auto result{std::accumulate(partial.begin(), partial.end(), 0.0,
+                              [](double currSum, std::future<double> &task) {
+                                currSum += task.get();
+                                return currSum;
+                              })};
   std::println("The final result would be: {}",
                result * std::exp(-0.05) / (100 * 100000));
   std::println("The total time it takes is: {}", t2 - t1);

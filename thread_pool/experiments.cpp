@@ -1,12 +1,12 @@
-#include <atomic>
 #include <condition_variable>
 #include <functional>
+#include <future>
 #include <iostream>
+#include <memory>
 #include <mutex>
 #include <print>
 #include <queue>
 #include <stop_token>
-#include <syncstream>
 #include <thread>
 #include <vector>
 
@@ -19,14 +19,18 @@ public:
       workers.emplace_back(std::bind_front(&ThreadPool::worker_loop, this));
     }
   }
-  //
-  void submit(std::move_only_function<void()> task) {
-    // TODO: push the task and wake a worker
+  // decay_t removes the reference / const modifier and apply a function pointer
+  // decay
+  template <class F, class R = std::invoke_result_t<std::decay_t<F>>>
+  [[nodiscard]] std::future<R> submit(F &&func) {
+    std::packaged_task<R()> task(func);
+    auto future = task.get_future();
     {
       std::lock_guard lock{m};
       jobs.push(std::move(task));
     }
     cv.notify_one();
+    return future;
   }
 
 private:
@@ -38,7 +42,9 @@ private:
     while (!token.stop_requested()) {
       std::unique_lock lock{m};
       // What if it is suprious wake-up?  Then it would keep waiting
-      bool has_work = cv.wait(lock, token, [this]() { return !jobs.empty(); });
+      bool has_work = cv.wait(lock, token, [this]() {
+        return !jobs.empty();
+      }); // stop_requested() == true && jobs.empty == false;
       if (!has_work) {
         return;
       }
@@ -55,26 +61,8 @@ private:
   std::vector<std::jthread> workers;
 };
 int main() {
-  //  ThreadPool pool{4};
-  //  for (int i{0}; i < 8; ++i) {
-  //    pool.submit([i] {
-  //      std::osyncstream out{std::cout};
-  //      std::println(out, "task {}", i);
-  //    });
-  //}
-
-  std::atomic<int> counter{0};
-
-  {
-    ThreadPool pool{4};
-    for (int i = 0; i < 1000; ++i) {
-      pool.submit([&]() {
-        for (int i = 0; i < 1000; ++i) {
-
-          ++counter;
-        }
-      });
-    }
+  ThreadPool pool{4};
+  for (int i{0}; i < 8; ++i) {
+    pool.submit([p = std::make_unique<int>(42)] { std::println("{}", *p); });
   }
-  std::println("counter = {}", counter.load());
 }
